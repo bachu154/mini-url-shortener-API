@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/shorten",
+      "methods": ["POST"],
+      "dest": "api/shorten.js"
+    },
+    {
+      "src": "/([a-zA-Z0-9_-]+)",
+      "methods": ["GET"],
+      "dest": "api/[code].js"
+    }
+  ]
+}
