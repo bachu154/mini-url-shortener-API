@@ -4,6 +4,9 @@ const Url = require("../models/url")
 
 const router = express.Router()
 
+// In-memory rate limit map
+const rateLimitMap = new Map()
+
 // URL validation regex
 const URL_REGEX =
   /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)$/
@@ -16,7 +19,22 @@ function isValidUrl(url) {
 // POST /shorten - Create short URL
 router.post("/shorten", async (req, res) => {
   try {
-    const { url } = req.body
+    const { url, expiryDate } = req.body
+
+    // Rate limit check per IP (5 requests/min)
+    const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress
+    const key = `rl-${ip}`
+    const current = rateLimitMap.get(key) || 0
+
+    if (current >= 5) {
+      return res.status(429).json({
+        error: "Too Many Requests",
+        message: "Rate limit exceeded. Try again in 1 minute.",
+      })
+    }
+
+    rateLimitMap.set(key, current + 1)
+    setTimeout(() => rateLimitMap.delete(key), 60 * 1000) // reset after 1 min
 
     // Validate input
     if (!url) {
@@ -65,6 +83,7 @@ router.post("/shorten", async (req, res) => {
     const newUrl = new Url({
       originalUrl,
       shortCode,
+      expiryDate: expiryDate ? new Date(expiryDate) : undefined,
     })
 
     await newUrl.save()
@@ -120,7 +139,7 @@ router.get("/:code", async (req, res) => {
 
     // Check if URL is expired
     if (urlDoc.isExpired()) {
-      return res.status(404).json({
+      return res.status(410).json({
         error: "Short URL expired",
         message: "This short URL has expired",
       })
@@ -131,7 +150,6 @@ router.get("/:code", async (req, res) => {
       await urlDoc.incrementClicks()
     } catch (clickError) {
       console.error("Error incrementing clicks:", clickError)
-      // Don't fail the redirect if click tracking fails
     }
 
     // Redirect to original URL
