@@ -42,7 +42,7 @@ const urlSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
+  }
 )
 
 // Indexes for better performance
@@ -51,20 +51,14 @@ urlSchema.index({ createdAt: -1 })
 urlSchema.index({ expiryDate: 1 })
 urlSchema.index({ originalUrl: 1 })
 
-// Virtual for checking if URL is expired
-urlSchema.virtual("isExpired").get(function () {
-  if (!this.expiryDate) return false
-  return new Date() > this.expiryDate
-})
-
-// Instance method to check if URL is expired
-urlSchema.methods.checkExpired = function () {
+// ✅ Instance method to check if URL is expired
+urlSchema.methods.isExpired = function () {
   if (!this.expiryDate) return false
   return new Date() > this.expiryDate
 }
 
-// Instance method to increment click count
-urlSchema.methods.incrementClick = async function () {
+// ✅ Instance method to increment click count
+urlSchema.methods.incrementClicks = async function () {
   this.clickCount += 1
   this.lastAccessed = new Date()
   return await this.save()
