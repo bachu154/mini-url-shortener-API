@@ -1,0 +1,39 @@
+{
+  "info": {
+    "name": "Mini URL Shortener API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "POST /shorten",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"url\": \"https://example.com/some/long/path\" }"
+        },
+        "url": {
+          "raw": "http://localhost:3000/shorten",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["shorten"]
+        }
+      }
+    },
+    {
+      "name": "GET /:code",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:3000/abc123",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["abc123"]
+        }
+      }
+    }
+  ]
+}

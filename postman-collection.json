@@ -1,0 +1,151 @@
+{
+  "info": {
+    "name": "URL Shortener API - Express.js + MongoDB",
+    "description": "Backend-only Mini URL Shortener API using Express.js and MongoDB",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the Express.js API"
+    },
+    {
+      "key": "shortCode",
+      "value": "",
+      "description": "Short code from shorten response"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if Express.js API is running"
+      },
+      "response": []
+    },
+    {
+      "name": "POST /shorten - Create Short URL",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('shortCode', response.shortCode);",
+              "    pm.test('Short URL created successfully', function () {",
+              "        pm.expect(response).to.have.property('shortUrl');",
+              "        pm.expect(response).to.have.property('shortCode');",
+              "        pm.expect(response.clickCount).to.equal(0);",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://example.com/long/path/to/some/resource\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/shorten",
+          "host": ["{{baseUrl}}"],
+          "path": ["shorten"]
+        },
+        "description": "Create a shortened URL using Express.js and MongoDB"
+      },
+      "response": []
+    },
+    {
+      "name": "GET /:code - Redirect to Original URL",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/{{shortCode}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["{{shortCode}}"]
+        },
+        "description": "Redirect to original URL and increment click count"
+      },
+      "response": []
+    },
+    {
+      "name": "POST /shorten - Test Invalid URL (400 Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"invalid-url-format\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/shorten",
+          "host": ["{{baseUrl}}"],
+          "path": ["shorten"]
+        },
+        "description": "Test 400 error for invalid URL format"
+      },
+      "response": []
+    },
+    {
+      "name": "POST /shorten - Test Missing URL (400 Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/shorten",
+          "host": ["{{baseUrl}}"],
+          "path": ["shorten"]
+        },
+        "description": "Test 400 error for missing URL"
+      },
+      "response": []
+    },
+    {
+      "name": "GET /:code - Test Non-existent Code (404 Error)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/nonexistent123",
+          "host": ["{{baseUrl}}"],
+          "path": ["nonexistent123"]
+        },
+        "description": "Test 404 error for non-existent short code"
+      },
+      "response": []
+    }
+  ]
+}
