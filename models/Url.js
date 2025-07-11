@@ -16,10 +16,6 @@ const urlSchema = new mongoose.Schema(
       minlength: [4, "Short code must be at least 4 characters"],
       maxlength: [10, "Short code cannot exceed 10 characters"],
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
     expiryDate: {
       type: Date,
       default: null,
@@ -45,26 +41,24 @@ const urlSchema = new mongoose.Schema(
   }
 )
 
-// Indexes for better performance
+// Indexes
 urlSchema.index({ shortCode: 1 }, { unique: true })
 urlSchema.index({ createdAt: -1 })
 urlSchema.index({ expiryDate: 1 })
 urlSchema.index({ originalUrl: 1 })
 
-// ✅ Instance method to check if URL is expired
+// Instance methods
 urlSchema.methods.isExpired = function () {
-  if (!this.expiryDate) return false
-  return new Date() > this.expiryDate
+  return this.expiryDate ? new Date() > this.expiryDate : false
 }
 
-// ✅ Instance method to increment click count
 urlSchema.methods.incrementClicks = async function () {
   this.clickCount += 1
   this.lastAccessed = new Date()
   return await this.save()
 }
 
-// Static method to find non-expired URL
+// Statics
 urlSchema.statics.findActiveByCode = function (shortCode) {
   return this.findOne({
     shortCode,
@@ -72,19 +66,18 @@ urlSchema.statics.findActiveByCode = function (shortCode) {
   })
 }
 
-// Pre-save middleware to validate expiry date
+urlSchema.statics.cleanExpired = function () {
+  return this.deleteMany({
+    expiryDate: { $lt: new Date() },
+  })
+}
+
+// Middleware
 urlSchema.pre("save", function (next) {
   if (this.expiryDate && this.expiryDate <= new Date()) {
     return next(new Error("Expiry date cannot be in the past"))
   }
   next()
 })
-
-// Static method to clean expired URLs
-urlSchema.statics.cleanExpired = function () {
-  return this.deleteMany({
-    expiryDate: { $lt: new Date() },
-  })
-}
 
 module.exports = mongoose.model("Url", urlSchema)
